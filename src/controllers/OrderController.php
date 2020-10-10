@@ -3,24 +3,26 @@
 namespace modava\iway\controllers;
 
 use backend\components\MyComponent;
-use backend\components\MyController;
-use modava\iway\models\Customer;
-use modava\iway\models\search\CustomerSearch;
-use Yii;
+use modava\iway\models\search\OrderDetailSearch;
 use yii\db\Exception;
-use yii\filters\VerbFilter;
+use Yii;
 use yii\helpers\Html;
+use yii\filters\VerbFilter;
 use yii\web\NotFoundHttpException;
+use backend\components\MyController;
+use modava\iway\models\Order;
+use modava\iway\models\search\OrderSearch;
 use yii\web\Response;
+use yii\widgets\ActiveForm;
 
 /**
- * CustomerController implements the CRUD actions for Customer model.
+ * OrderController implements the CRUD actions for Order model.
  */
-class CustomerController extends MyController
+class OrderController extends MyController
 {
     /**
-     * {@inheritdoc}
-     */
+    * {@inheritdoc}
+    */
     public function behaviors()
     {
         return [
@@ -34,12 +36,12 @@ class CustomerController extends MyController
     }
 
     /**
-     * Lists all Customer models.
-     * @return mixed
-     */
+    * Lists all Order models.
+    * @return mixed
+    */
     public function actionIndex()
     {
-        $searchModel = new CustomerSearch();
+        $searchModel = new OrderSearch();
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         $totalPage = $this->getTotalPage($dataProvider);
@@ -47,16 +49,16 @@ class CustomerController extends MyController
         return $this->render('index', [
             'searchModel' => $searchModel,
             'dataProvider' => $dataProvider,
-            'totalPage' => $totalPage,
+            'totalPage'    => $totalPage,
         ]);
-    }
+            }
 
     /**
-     * Displays a single Customer model.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    * Displays a single Order model.
+    * @param integer $id
+    * @return mixed
+    * @throws NotFoundHttpException if the model cannot be found
+    */
     public function actionView($id)
     {
         return $this->render('view', [
@@ -65,16 +67,22 @@ class CustomerController extends MyController
     }
 
     /**
-     * Creates a new Customer model.
-     * If creation is successful, the browser will be redirected to the 'view' page.
-     * @return mixed
-     */
+    * Creates a new Order model.
+    * If creation is successful, the browser will be redirected to the 'view' page.
+    * @return mixed
+    */
     public function actionCreate()
     {
-        $model = new Customer();
+        $model = new Order();
 
         if ($model->load(Yii::$app->request->post())) {
-            if ($model->validate() && $model->save()) {
+
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = Response::FORMAT_JSON;
+                return ActiveForm::validate($model);
+            }
+
+            if ($model->validate() && $model->save() && $model->saveSalesOrderDetail()) {
                 Yii::$app->session->setFlash('toastr-' . $model->toastr_key . '-view', [
                     'title' => 'Thông báo',
                     'text' => 'Tạo mới thành công',
@@ -100,63 +108,58 @@ class CustomerController extends MyController
     }
 
     /**
-     * Updates an existing Customer model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    * Updates an existing Order model.
+    * If update is successful, the browser will be redirected to the 'view' page.
+    * @param integer $id
+    * @return mixed
+    * @throws NotFoundHttpException if the model cannot be found
+    */
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post())) {
-            if ($model->validate()) {
-                if ($model->save()) {
-                    Yii::$app->session->setFlash('toastr-' . $model->toastr_key . '-view', [
-                        'title' => 'Thông báo',
-                        'text' => 'Cập nhật thành công',
-                        'type' => 'success'
-                    ]);
-                    return $this->redirect(['view', 'id' => $model->id]);
-                }
+
+            if (Yii::$app->request->isAjax) {
+                Yii::$app->response->format = Response::FORMAT_JSON;
+                return ActiveForm::validate($model);
+            }
+
+            if ($model->validate() && $model->save() && $model->saveSalesOrderDetail()) {
+                Yii::$app->session->setFlash('toastr-' . $model->toastr_key . '-view', [
+                    'title' => 'Thông báo',
+                    'text' => 'Cập nhật thành công',
+                    'type' => 'success',
+                ]);
+                return $this->redirect(['view', 'id' => $model->id]);
             } else {
                 $errors = Html::tag('p', 'Cập nhật thất bại');
                 foreach ($model->getErrors() as $error) {
-                    $errors .= Html::tag('p', $error[0]);
+                    $error1 = is_array($error[0]) ? implode($error[0], ', ') : $error[0];
+                    $errors .= Html::tag('p', $error1);
                 }
                 Yii::$app->session->setFlash('toastr-' . $model->toastr_key . '-form', [
                     'title' => 'Thông báo',
                     'text' => $errors,
-                    'type' => 'warning'
+                    'type' => 'warning',
                 ]);
             }
         }
+
+        $model->order_detail = $model->salesOrderDetails;
 
         return $this->render('update', [
             'model' => $model,
         ]);
     }
 
-    public function actionGetCustomerByKeyWord($q = null, $id = null)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $out = ['results' => ['id' => '', 'text' => '']];
-        if (!is_null($q)) {
-            $out = Customer::getCustomerByKeyWord($q);
-        } elseif ($id > 0) {
-            $out['results'] = ['id' => $id, 'text' => Customer::findOne($id)->fullname];
-        }
-        return $out;
-    }
-
     /**
-     * Deletes an existing Customer model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    * Deletes an existing Order model.
+    * If deletion is successful, the browser will be redirected to the 'index' page.
+    * @param integer $id
+    * @return mixed
+    * @throws NotFoundHttpException if the model cannot be found
+    */
     public function actionDelete($id)
     {
         $model = $this->findModel($id);
@@ -189,17 +192,17 @@ class CustomerController extends MyController
     }
 
     /**
-     * @param $perpage
-     */
+    * @param $perpage
+    */
     public function actionPerpage($perpage)
     {
         MyComponent::setCookies('pageSize', $perpage);
     }
 
     /**
-     * @param $dataProvider
-     * @return float|int
-     */
+    * @param $dataProvider
+    * @return float|int
+    */
     public function getTotalPage($dataProvider)
     {
         if (MyComponent::hasCookies('pageSize')) {
@@ -208,25 +211,25 @@ class CustomerController extends MyController
             $dataProvider->pagination->pageSize = 10;
         }
 
-        $pageSize = $dataProvider->pagination->pageSize;
+        $pageSize   = $dataProvider->pagination->pageSize;
         $totalCount = $dataProvider->totalCount;
-        $totalPage = (($totalCount + $pageSize - 1) / $pageSize);
+        $totalPage  = (($totalCount + $pageSize - 1) / $pageSize);
 
         return $totalPage;
     }
 
     /**
-     * Finds the Customer model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param integer $id
-     * @return Customer the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
+    * Finds the Order model based on its primary key value.
+    * If the model is not found, a 404 HTTP exception will be thrown.
+    * @param integer $id
+    * @return Order the loaded model
+    * @throws NotFoundHttpException if the model cannot be found
+    */
 
 
     protected function findModel($id)
     {
-        if (($model = Customer::findOne($id)) !== null) {
+        if (($model = Order::findOne($id)) !== null) {
             return $model;
         }
 

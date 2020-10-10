@@ -74,6 +74,18 @@ function saveStateSearchPanel(searchPanel, button, key) {
     });
 }
 
+function formatToRawNumber(number) {
+    let result = parseFloat(number.toString().replace(/,/g, ''));
+    return isNaN(result) ? 0 : result;
+}
+
+function formatAsDecimal(number) {
+    return new Intl.NumberFormat('en-US').format(formatToRawNumber(number));
+}
+
+function formatAsCurrency(number, symbol = '₫') {
+    return formatAsDecimal(number) + ' ' + symbol;
+}
 
 $(function () {
     "use strict";
