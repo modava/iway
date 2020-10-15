@@ -12,7 +12,7 @@ use yii\widgets\Pjax;
 /* @var $searchModel modava\iway\models\search\ReceiptSearch */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
-$this->title = Yii::t('backend', 'Receipts');
+$this->title = Yii::t('backend', 'Phiếu thu');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
     <div class="container-fluid px-xxl-15 px-xl-10">
@@ -120,9 +120,8 @@ $this->params['breadcrumbs'][] = $this->title;
                                             [
                                                 'attribute' => 'order_id',
                                                 'format' => 'raw',
-                                                'value' => function ($model) {
-                                                    if (!$model->order_id) return null;
-                                                    return Html::a($model->order->title, Url::toRoute(['order/view', 'id' => $model->order_id]));
+                                                'value' => function (\modava\iway\models\Receipt $model) {
+                                                    return $model->getDisplayRelatedField('order_id', 'order', 'order');
                                                 }
                                             ],
                                             [

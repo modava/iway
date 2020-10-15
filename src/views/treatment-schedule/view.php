@@ -1,17 +1,16 @@
 <?php
 
 use backend\widgets\ToastrWidget;
-use modava\iway\helpers\Utils;
 use modava\iway\widgets\NavbarWidgets;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model modava\iway\models\Receipt */
+/* @var $model modava\iway\models\TreatmentSchedule */
 
 $this->title = $model->title;
-$this->params['breadcrumbs'][] = ['label' => Yii::t('backend', 'Receipts'), 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => Yii::t('backend', 'Treatment Schedules'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 \yii\web\YiiAsset::register($this);
 ?>
@@ -52,38 +51,16 @@ $this->params['breadcrumbs'][] = $this->title;
                         [
                             'attribute' => 'order_id',
                             'format' => 'raw',
-                            'value' => function (\modava\iway\models\Receipt $model) {
+                            'value' => function (\modava\iway\models\TreatmentSchedule $model) {
                                 return $model->getDisplayRelatedField('order_id', 'order', 'order');
                             }
                         ],
                         [
                             'attribute' => 'status',
-                            'format' => 'raw',
-                            'value' => function (modava\iway\models\Receipt $model) {
-                                $class = '';
-                                switch ($model->status) {
-                                    case 'nhap':
-                                        $class = 'badge-light';
-                                        break ;
-                                    case 'da_thu':
-                                        $class = 'badge-success';
-                                        break ;
-                                    case 'hoan_coc':
-                                        $class = 'badge-secondary';
-                                        break ;
-                                };
-                                return Html::tag('span', $model->getDisplayDropdown($model->status, 'status'), [
-                                        'class' => 'font-14 badge ' . $class
-                                ]);
+                            'value' => function (\modava\iway\models\TreatmentSchedule $model) {
+                                $model->getDisplayDropdown($model->status, 'status');
                             }
                         ],
-                        [
-                            'attribute' => 'receipt_date',
-                            'value' => function (modava\iway\models\Receipt $model) {
-                                return Utils::convertDateTimeToDisplayFormat($model->receipt_date);
-                            }
-                        ],
-                        'amount:currency',
                         'description:raw',
                         'created_at:datetime',
                         'updated_at:datetime',

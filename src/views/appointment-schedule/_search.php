@@ -62,6 +62,7 @@ $dateTemplateInput = [
                         'ajax' => [
                             'url' => Url::toRoute(['/iway/customer/get-customer-by-key-word']),
                             'dataType' => 'json',
+                            'delay' => 250,
                             'data' => new JsExpression('function(params) { return {q:params.term}; }')
                         ],
                         'escapeMarkup' => new JsExpression('function (markup) { return markup; }'),
@@ -160,6 +161,7 @@ $dateTemplateInput = [
                 <button class="btn btn-primary btn-sm btn-hide-search" data-toggle="collapse" data-target="#search-panel"
                         aria-expanded="false" aria-controls="search-panel" type="button"><?= Yii::t('backend',
                         'Ẩn tìm kiếm') ?></button>
+                <?= Html::a('Ngày hẹn hôm nay', \yii\helpers\Url::toRoute(['index', 'AppointmentScheduleSearch[start_time]' => date('d-m-Y') . ' - ' . date('d-m-Y')]), ['class' => 'btn btn-info btn-sm']) ?>
             </div>
         </div>
     </section>
